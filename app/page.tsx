@@ -12,6 +12,22 @@ export default function Home() {
           <p className="text-gray-600">Generate product tags with barcodes for your business</p>
         </div>
         <TagManager />
+        
+        {/* Copyright Footer */}
+        <footer className="mt-12 text-center text-gray-600 text-sm">
+          <p>
+            © {new Date().getFullYear()}{" "}
+            <a
+              href="https://stefanoturcarelli.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+            >
+              Stefano Turcarelli
+            </a>
+            . All rights reserved.
+          </p>
+        </footer>
       </div>
     </div>
   );
