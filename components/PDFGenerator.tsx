@@ -3,13 +3,14 @@
 import { useState } from "react";
 import jsPDF from "jspdf";
 import JsBarcode from "jsbarcode";
-import { Product } from "./TagManager";
+import { useProducts } from "@/stores/productStore";
 
 interface PDFGeneratorProps {
-  products: Product[];
+  products?: never; // Remove products prop since we'll get it from store
 }
 
-export function PDFGenerator({ products }: PDFGeneratorProps) {
+export function PDFGenerator({}: PDFGeneratorProps) {
+  const products = useProducts();
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Letter paper dimensions in mm

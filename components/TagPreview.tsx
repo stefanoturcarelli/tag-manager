@@ -2,13 +2,14 @@
 
 import { useEffect, useRef } from "react";
 import JsBarcode from "jsbarcode";
-import { Product } from "./TagManager";
+import { useProducts } from "@/stores/productStore";
 
 interface TagPreviewProps {
-  products: Product[];
+  products?: never; // Remove products prop since we'll get it from store
 }
 
-export function TagPreview({ products }: TagPreviewProps) {
+export function TagPreview({}: TagPreviewProps) {
+  const products = useProducts();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {

@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Product } from "./TagManager";
+import { useAddProduct } from "@/stores/productStore";
 
 interface ProductFormProps {
-  onAddProduct: (product: Omit<Product, "id">) => void;
+  onAddProduct?: () => void; // Optional callback for UI feedback
 }
 
 export function ProductForm({ onAddProduct }: ProductFormProps) {
+  const addProduct = useAddProduct();
   const [formData, setFormData] = useState({
     barcode: "",
     productName: "",
@@ -26,7 +27,11 @@ export function ProductForm({ onAddProduct }: ProductFormProps) {
       return;
     }
 
-    onAddProduct(formData);
+    // Add product to store
+    addProduct(formData);
+    
+    // Call optional callback
+    onAddProduct?.();
     
     // Reset form
     setFormData({

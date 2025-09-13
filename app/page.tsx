@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import { TagManager } from "@/components/TagManager";
+import { useDebugStore } from "@/hooks/useDebugStore";
 
 export default function Home() {
+  // Enable debugging in development
+  useDebugStore();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
