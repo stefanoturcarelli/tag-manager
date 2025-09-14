@@ -3,7 +3,7 @@
 import { useState } from "react";
 import jsPDF from "jspdf";
 import JsBarcode from "jsbarcode";
-import { useProducts } from "@/stores/productStore";
+import { useProducts, useCompanyLogo } from "@/stores/productStore";
 import { useToast } from "@/contexts/ToastContext";
 
 interface PDFGeneratorProps {
@@ -12,26 +12,27 @@ interface PDFGeneratorProps {
 
 export function PDFGenerator({}: PDFGeneratorProps) {
   const products = useProducts();
+  const companyLogo = useCompanyLogo();
   const [isGenerating, setIsGenerating] = useState(false);
   const { success, error, warning } = useToast();
 
   // Letter paper dimensions in mm
   const LETTER_WIDTH = 216; // 8.5 inches
   const LETTER_HEIGHT = 279; // 11 inches
-  
+
   // Tag dimensions in mm (converted from 130px x 140px at 96 DPI)
   const TAG_WIDTH = 34.4; // 130px = 34.4mm
   const TAG_HEIGHT = 37.0; // 140px = 37.0mm
   const BARCODE_WIDTH = 31.8; // 120px = 31.8mm
   const BARCODE_HEIGHT = 18.5; // 70px = 18.5mm
-  
+
   // Margins
   const MARGIN = 10; // 1cm margin
-  
+
   // Calculate how many tags fit per page
-  const availableWidth = LETTER_WIDTH - (2 * MARGIN);
-  const availableHeight = LETTER_HEIGHT - (2 * MARGIN);
-  
+  const availableWidth = LETTER_WIDTH - 2 * MARGIN;
+  const availableHeight = LETTER_HEIGHT - 2 * MARGIN;
+
   const tagsPerRow = Math.floor(availableWidth / TAG_WIDTH);
   const tagsPerColumn = Math.floor(availableHeight / TAG_HEIGHT);
   const tagsPerPage = tagsPerRow * tagsPerColumn;
@@ -51,6 +52,24 @@ export function PDFGenerator({}: PDFGeneratorProps) {
         format: "letter",
       });
 
+      // Add company logo to first page if available
+      if (companyLogo) {
+        try {
+          pdf.addImage(
+            companyLogo,
+            "PNG",
+            10, // x position
+            10, // y position
+            30, // width
+            15, // height
+            undefined,
+            "FAST"
+          );
+        } catch (err) {
+          console.warn("Could not add company logo to PDF:", err);
+        }
+      }
+
       const totalPages = Math.ceil(products.length / tagsPerPage);
 
       for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
@@ -67,8 +86,8 @@ export function PDFGenerator({}: PDFGeneratorProps) {
           const row = Math.floor(i / tagsPerRow);
           const col = i % tagsPerRow;
 
-          const x = MARGIN + (col * TAG_WIDTH);
-          const y = MARGIN + (row * TAG_HEIGHT);
+          const x = MARGIN + col * TAG_WIDTH;
+          const y = MARGIN + row * TAG_HEIGHT;
 
           // Draw tag border
           pdf.setDrawColor(0, 0, 0);
@@ -93,7 +112,7 @@ export function PDFGenerator({}: PDFGeneratorProps) {
             const barcodeDataURL = barcodeCanvas.toDataURL("image/png");
             const barcodeX = x + (TAG_WIDTH - BARCODE_WIDTH) / 2;
             const barcodeY = y + 1;
-            
+
             pdf.addImage(
               barcodeDataURL,
               "PNG",
@@ -119,17 +138,17 @@ export function PDFGenerator({}: PDFGeneratorProps) {
 
             if (product.description) {
               // Split description into multiple lines if too long
-              const words = product.description.split(' ');
-              let line = '';
+              const words = product.description.split(" ");
+              let line = "";
               const maxWidth = TAG_WIDTH - 2;
-              
+
               for (const word of words) {
-                const testLine = line + word + ' ';
+                const testLine = line + word + " ";
                 const textWidth = pdf.getTextWidth(testLine);
-                if (textWidth > maxWidth && line !== '') {
+                if (textWidth > maxWidth && line !== "") {
                   pdf.text(line, x + 1, currentY);
                   currentY += 3;
-                  line = word + ' ';
+                  line = word + " ";
                 } else {
                   line = testLine;
                 }
@@ -159,29 +178,36 @@ export function PDFGenerator({}: PDFGeneratorProps) {
               pdf.text(`UK: ${product.ukSize}`, x + 1, currentY);
             }
           } catch (error) {
-            console.error("Error generating barcode for product:", product.barcode, error);
-            
+            console.error(
+              "Error generating barcode for product:",
+              product.barcode,
+              error
+            );
+
             // Add error text
             pdf.setFontSize(6);
             pdf.setTextColor(255, 0, 0);
-            pdf.text(
-              "Barcode Error",
-              x + TAG_WIDTH / 2,
-              y + TAG_HEIGHT / 2,
-              { align: "center" }
-            );
+            pdf.text("Barcode Error", x + TAG_WIDTH / 2, y + TAG_HEIGHT / 2, {
+              align: "center",
+            });
           }
         }
       }
 
       // Save the PDF
-      pdf.save(`product-tags-${new Date().toISOString().split('T')[0]}.pdf`);
-      
+      pdf.save(`product-tags-${new Date().toISOString().split("T")[0]}.pdf`);
+
       // Show success toast
-      success("PDF Generated!", `Successfully generated PDF with ${products.length} tags`);
+      success(
+        "PDF Generated!",
+        `Successfully generated PDF with ${products.length} tags`
+      );
     } catch (err) {
       console.error("Error generating PDF:", err);
-      error("PDF Generation Failed", "An error occurred while generating the PDF. Please try again.");
+      error(
+        "PDF Generation Failed",
+        "An error occurred while generating the PDF. Please try again."
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -195,13 +221,13 @@ export function PDFGenerator({}: PDFGeneratorProps) {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
-        Generate PDF
-      </h2>
-      
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">Generate PDF</h2>
+
       <div className="space-y-4">
         <div className="text-sm text-gray-600">
-          <p><strong>Layout Information:</strong></p>
+          <p>
+            <strong>Layout Information:</strong>
+          </p>
           <ul className="list-disc list-inside space-y-1 mt-2">
             <li>Tags per page: {tagsPerPage}</li>
             <li>Total pages: {totalPages}</li>
@@ -220,7 +246,9 @@ export function PDFGenerator({}: PDFGeneratorProps) {
               : "bg-green-600 text-white hover:bg-green-700"
           }`}
         >
-          {isGenerating ? "Generating PDF..." : `Generate PDF (${products.length} tags)`}
+          {isGenerating
+            ? "Generating PDF..."
+            : `Generate PDF (${products.length} tags)`}
         </button>
 
         {isGenerating && (
