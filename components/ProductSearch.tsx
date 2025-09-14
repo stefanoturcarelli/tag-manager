@@ -31,7 +31,7 @@ export function ProductSearch() {
             type="text"
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search by name, barcode, T2T code, color, or size..."
+            placeholder="Search by description, barcode, T2T code, color, or size..."
             className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900"
           />
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -66,10 +66,10 @@ export function ProductSearch() {
               >
                 <div className="flex-1">
                   <div className="font-medium text-gray-900">
-                    {product.productName}
+                    {product.description}
                   </div>
                   <div className="text-sm text-gray-600">
-                    Barcode: {product.barcode} | T2T: {product.t2tCode}
+                    Barcode: {product.barcode}
                   </div>
                   <div className="text-xs text-gray-500">
                     Added: {new Date(product.createdAt).toLocaleDateString()}

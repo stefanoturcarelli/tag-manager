@@ -17,11 +17,11 @@ export function PDFGenerator({}: PDFGeneratorProps) {
   const LETTER_WIDTH = 216; // 8.5 inches
   const LETTER_HEIGHT = 279; // 11 inches
   
-  // Tag dimensions in mm
-  const TAG_WIDTH = 30; // 3cm
-  const TAG_HEIGHT = 45; // 4.5cm
-  const BARCODE_WIDTH = 25; // 2.5cm
-  const BARCODE_HEIGHT = 15; // 1.5cm
+  // Tag dimensions in mm (converted from 130px x 140px at 96 DPI)
+  const TAG_WIDTH = 34.4; // 130px = 34.4mm
+  const TAG_HEIGHT = 37.0; // 140px = 37.0mm
+  const BARCODE_WIDTH = 31.8; // 120px = 31.8mm
+  const BARCODE_HEIGHT = 18.5; // 70px = 18.5mm
   
   // Margins
   const MARGIN = 10; // 1cm margin
@@ -72,14 +72,14 @@ export function PDFGenerator({}: PDFGeneratorProps) {
 
           // Generate barcode
           const barcodeCanvas = document.createElement("canvas");
-          barcodeCanvas.width = 200;
-          barcodeCanvas.height = 60;
+          barcodeCanvas.width = 240; // Higher resolution for better quality
+          barcodeCanvas.height = 140;
 
           try {
             JsBarcode(barcodeCanvas, product.barcode, {
               format: "CODE128",
               width: 2,
-              height: 50,
+              height: 120,
               displayValue: false,
               margin: 5,
             });
@@ -87,7 +87,7 @@ export function PDFGenerator({}: PDFGeneratorProps) {
             // Convert canvas to image and add to PDF
             const barcodeDataURL = barcodeCanvas.toDataURL("image/png");
             const barcodeX = x + (TAG_WIDTH - BARCODE_WIDTH) / 2;
-            const barcodeY = y + 2;
+            const barcodeY = y + 1;
             
             pdf.addImage(
               barcodeDataURL,
@@ -108,13 +108,31 @@ export function PDFGenerator({}: PDFGeneratorProps) {
               { align: "center" }
             );
 
-            // Add product information
-            let currentY = barcodeY + BARCODE_HEIGHT + 6;
-            pdf.setFontSize(4);
+            // Add product information (description)
+            let currentY = barcodeY + BARCODE_HEIGHT + 10;
+            pdf.setFontSize(8);
 
-            if (product.productName) {
-              pdf.text(product.productName, x + 1, currentY);
-              currentY += 3;
+            if (product.description) {
+              // Split description into multiple lines if too long
+              const words = product.description.split(' ');
+              let line = '';
+              const maxWidth = TAG_WIDTH - 2;
+              
+              for (const word of words) {
+                const testLine = line + word + ' ';
+                const textWidth = pdf.getTextWidth(testLine);
+                if (textWidth > maxWidth && line !== '') {
+                  pdf.text(line, x + 1, currentY);
+                  currentY += 3;
+                  line = word + ' ';
+                } else {
+                  line = testLine;
+                }
+              }
+              if (line) {
+                pdf.text(line, x + 1, currentY);
+                currentY += 3;
+              }
             }
 
             if (product.t2tCode) {
@@ -180,8 +198,8 @@ export function PDFGenerator({}: PDFGeneratorProps) {
             <li>Tags per page: {tagsPerPage}</li>
             <li>Total pages: {totalPages}</li>
             <li>Tags per row: {tagsPerRow}</li>
-            <li>Tag size: 3cm × 4.5cm</li>
-            <li>Barcode size: 2.5cm × 1.5cm</li>
+            <li>Tag size: 130px × 140px (34.4mm × 37.0mm)</li>
+            <li>Barcode size: 120px × 70px (31.8mm × 18.5mm)</li>
           </ul>
         </div>
 

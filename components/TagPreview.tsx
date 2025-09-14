@@ -23,10 +23,10 @@ export function TagPreview({}: TagPreviewProps) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Calculate how many tags we can fit
-    const tagWidth = 113; // 3cm in pixels (at 96 DPI)
-    const tagHeight = 170; // 4.5cm in pixels (at 96 DPI)
-    const barcodeWidth = 94; // 2.5cm in pixels
-    const barcodeHeight = 57; // 1.5cm in pixels
+    const tagWidth = 130; // 130px width
+    const tagHeight = 140; // 140px height (70px barcode + 70px description)
+    const barcodeWidth = 120; // 120px width for barcode
+    const barcodeHeight = 70; // 70px height for barcode
     
     const tagsPerRow = Math.floor(canvas.width / tagWidth);
     const maxRows = Math.floor(canvas.height / tagHeight);
@@ -54,7 +54,7 @@ export function TagPreview({}: TagPreviewProps) {
         JsBarcode(barcodeCanvas, product.barcode, {
           format: "CODE128",
           width: 2,
-          height: barcodeHeight - 10,
+          height: barcodeHeight - 15,
           displayValue: false,
           margin: 5,
         });
@@ -62,7 +62,7 @@ export function TagPreview({}: TagPreviewProps) {
         // Draw barcode
         const barcodeX = x + (tagWidth - barcodeWidth) / 2;
         const barcodeY = y + 5;
-        ctx.drawImage(barcodeCanvas, barcodeX, barcodeY, barcodeWidth, barcodeHeight - 10);
+        ctx.drawImage(barcodeCanvas, barcodeX, barcodeY, barcodeWidth, barcodeHeight - 15);
 
         // Draw barcode numbers
         ctx.fillStyle = "#000";
@@ -74,18 +74,36 @@ export function TagPreview({}: TagPreviewProps) {
           barcodeY + barcodeHeight - 5
         );
 
-        // Draw product information
-        const infoY = barcodeY + barcodeHeight + 5;
-        ctx.font = "6px Arial";
+        // Draw product information (description)
+        const infoY = barcodeY + barcodeHeight + 10;
+        ctx.font = "8px Arial";
         ctx.textAlign = "left";
         
         let currentY = infoY;
-        const lineHeight = 8;
-        const margin = 2;
+        const lineHeight = 10;
+        const margin = 5;
 
-        if (product.productName) {
-          ctx.fillText(product.productName, x + margin, currentY);
-          currentY += lineHeight;
+        if (product.description) {
+          // Split description into multiple lines if too long
+          const words = product.description.split(' ');
+          let line = '';
+          const maxWidth = tagWidth - (margin * 2);
+          
+          for (const word of words) {
+            const testLine = line + word + ' ';
+            const metrics = ctx.measureText(testLine);
+            if (metrics.width > maxWidth && line !== '') {
+              ctx.fillText(line, x + margin, currentY);
+              currentY += lineHeight;
+              line = word + ' ';
+            } else {
+              line = testLine;
+            }
+          }
+          if (line) {
+            ctx.fillText(line, x + margin, currentY);
+            currentY += lineHeight;
+          }
         }
         
         if (product.t2tCode) {

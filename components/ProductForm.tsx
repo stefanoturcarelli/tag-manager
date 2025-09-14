@@ -11,7 +11,7 @@ export function ProductForm({ onAddProduct }: ProductFormProps) {
   const addProduct = useAddProduct();
   const [formData, setFormData] = useState({
     barcode: "",
-    productName: "",
+    description: "",
     t2tCode: "",
     color: "",
     usSize: "",
@@ -22,8 +22,8 @@ export function ProductForm({ onAddProduct }: ProductFormProps) {
     e.preventDefault();
     
     // Validate required fields
-    if (!formData.barcode || !formData.productName) {
-      alert("Please fill in at least Barcode and Product Name");
+    if (!formData.barcode || !formData.description) {
+      alert("Please fill in Barcode and Description");
       return;
     }
 
@@ -36,7 +36,7 @@ export function ProductForm({ onAddProduct }: ProductFormProps) {
     // Reset form
     setFormData({
       barcode: "",
-      productName: "",
+      description: "",
       t2tCode: "",
       color: "",
       usSize: "",
@@ -59,7 +59,7 @@ export function ProductForm({ onAddProduct }: ProductFormProps) {
       </h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
           <div>
             <label htmlFor="barcode" className="block text-sm font-medium text-gray-700 mb-1">
               Barcode *
@@ -77,78 +77,18 @@ export function ProductForm({ onAddProduct }: ProductFormProps) {
           </div>
 
           <div>
-            <label htmlFor="productName" className="block text-sm font-medium text-gray-700 mb-1">
-              Product Name *
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+              Description *
             </label>
-            <input
-              type="text"
-              id="productName"
-              name="productName"
-              value={formData.productName}
-              onChange={handleChange}
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900"
-              placeholder="Enter product name"
+              placeholder="Enter product description"
+              rows={3}
               required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="t2tCode" className="block text-sm font-medium text-gray-700 mb-1">
-              T2T Code
-            </label>
-            <input
-              type="text"
-              id="t2tCode"
-              name="t2tCode"
-              value={formData.t2tCode}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900"
-              placeholder="Enter T2T code"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-1">
-              Color
-            </label>
-            <input
-              type="text"
-              id="color"
-              name="color"
-              value={formData.color}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900"
-              placeholder="Enter color"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="usSize" className="block text-sm font-medium text-gray-700 mb-1">
-              US Size
-            </label>
-            <input
-              type="text"
-              id="usSize"
-              name="usSize"
-              value={formData.usSize}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900"
-              placeholder="Enter US size"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="ukSize" className="block text-sm font-medium text-gray-700 mb-1">
-              UK Size
-            </label>
-            <input
-              type="text"
-              id="ukSize"
-              name="ukSize"
-              value={formData.ukSize}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900"
-              placeholder="Enter UK size"
             />
           </div>
         </div>

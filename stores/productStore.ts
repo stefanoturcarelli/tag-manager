@@ -4,7 +4,7 @@ import { persist, createJSONStorage, devtools } from 'zustand/middleware';
 export interface Product {
   id: string;
   barcode: string;
-  productName: string;
+  description: string;
   t2tCode: string;
   color: string;
   usSize: string;
@@ -89,7 +89,7 @@ export const useProductStore = create<ProductStore>()(
         
         const lowercaseQuery = query.toLowerCase();
         return products.filter((product) =>
-          product.productName.toLowerCase().includes(lowercaseQuery) ||
+          product.description.toLowerCase().includes(lowercaseQuery) ||
           product.barcode.includes(query) ||
           product.t2tCode.toLowerCase().includes(lowercaseQuery) ||
           product.color.toLowerCase().includes(lowercaseQuery) ||

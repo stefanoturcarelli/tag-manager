@@ -42,10 +42,10 @@ export function TagManager() {
                   >
                   <div className="flex-1">
                     <div className="font-medium text-gray-900">
-                      {product.productName}
+                      {product.description}
                     </div>
                     <div className="text-sm text-gray-600">
-                      Barcode: {product.barcode} | T2T: {product.t2tCode}
+                      Barcode: {product.barcode}
                     </div>
                     <div className="text-xs text-gray-500">
                       Added: {new Date(product.createdAt).toLocaleDateString()}
