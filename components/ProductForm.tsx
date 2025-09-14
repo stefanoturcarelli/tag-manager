@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { useAddProduct } from "@/stores/productStore";
 import { useToast } from "@/contexts/ToastContext";
-import { useAutocomplete } from "@/hooks/useAutocomplete";
-import { AutocompleteInput } from "./AutocompleteInput";
 
 interface ProductFormProps {
   onAddProduct?: () => void; // Optional callback for UI feedback
@@ -13,7 +11,6 @@ interface ProductFormProps {
 export function ProductForm({ onAddProduct }: ProductFormProps) {
   const addProduct = useAddProduct();
   const { success, error } = useToast();
-  const { barcodeSuggestions, descriptionSuggestions } = useAutocomplete();
   const [formData, setFormData] = useState({
     barcode: "",
     description: "",
@@ -80,16 +77,7 @@ export function ProductForm({ onAddProduct }: ProductFormProps) {
         Add New Product
       </h2>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4"
-        autoComplete="on"
-        method="post"
-      >
-        {/* Hidden inputs to help browsers understand form structure */}
-        <input type="hidden" name="form-type" value="product" />
-        <input type="hidden" name="timestamp" value={Date.now()} />
-
+      <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
         <div className="space-y-4">
           <div>
             <label
@@ -98,14 +86,19 @@ export function ProductForm({ onAddProduct }: ProductFormProps) {
             >
               Barcode *
             </label>
-            <AutocompleteInput
+            <input
+              type="text"
               id="barcode"
               name="barcode"
               value={formData.barcode}
               onChange={handleChange}
               placeholder="Enter barcode numbers"
-              suggestions={barcodeSuggestions}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              data-lpignore="true"
               required
             />
           </div>
@@ -117,7 +110,7 @@ export function ProductForm({ onAddProduct }: ProductFormProps) {
             >
               Description *
             </label>
-            <AutocompleteInput
+            <textarea
               id="description"
               name="description"
               value={formData.description}
@@ -128,8 +121,12 @@ export function ProductForm({ onAddProduct }: ProductFormProps) {
                 }))
               }
               placeholder="Enter product description"
-              suggestions={descriptionSuggestions}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900 min-h-[80px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900 min-h-[80px] resize-none"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              data-lpignore="true"
               required
             />
           </div>
