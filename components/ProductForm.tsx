@@ -141,21 +141,70 @@ export function ProductForm({ onAddProduct }: ProductFormProps) {
             >
               Quantity (optional)
             </label>
-            <input
-              type="number"
-              id="quantity"
-              name="quantity"
-              value={quantity}
-              onChange={(e) =>
-                setQuantity(Math.max(1, parseInt(e.target.value) || 1))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900"
-              placeholder="1"
-              min="1"
-              max="100"
-              autoComplete="off"
-            />
-            <p className="text-xs text-gray-500 mt-1">
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                disabled={quantity <= 1}
+                className="flex items-center justify-center w-10 h-10 rounded-lg border-2 border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                aria-label="Decrease quantity"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M20 12H4"
+                  />
+                </svg>
+              </button>
+
+              <div className="flex-1 min-w-0">
+                <input
+                  type="number"
+                  id="quantity"
+                  name="quantity"
+                  value={quantity}
+                  onChange={(e) =>
+                    setQuantity(
+                      Math.max(1, Math.min(100, parseInt(e.target.value) || 1))
+                    )
+                  }
+                  className="w-full px-4 py-2 text-center border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg font-semibold text-gray-900"
+                  min="1"
+                  max="100"
+                  autoComplete="off"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setQuantity(Math.min(100, quantity + 1))}
+                disabled={quantity >= 100}
+                className="flex items-center justify-center w-10 h-10 rounded-lg border-2 border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                aria-label="Increase quantity"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1 text-center">
               Number of copies to generate (1-100)
             </p>
           </div>
