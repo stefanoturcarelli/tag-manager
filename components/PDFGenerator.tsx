@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import jsPDF from "jspdf";
-import JsBarcode from "jsbarcode";
-import { useProducts, useCompanyLogo } from "@/stores/productStore";
-import { useToast } from "@/contexts/ToastContext";
+import { useState } from 'react';
+import jsPDF from 'jspdf';
+import JsBarcode from 'jsbarcode';
+import { useProducts, useCompanyLogo } from '@/stores/productStore';
+import { useToast } from '@/contexts/ToastContext';
 
 interface PDFGeneratorProps {
   products?: never; // Remove products prop since we'll get it from store
@@ -39,7 +39,7 @@ export function PDFGenerator({}: PDFGeneratorProps) {
 
   const generatePDF = async () => {
     if (products.length === 0) {
-      warning("No Products", "Please add some products before generating PDF");
+      warning('No Products', 'Please add some products before generating PDF');
       return;
     }
 
@@ -47,9 +47,9 @@ export function PDFGenerator({}: PDFGeneratorProps) {
 
     try {
       const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "letter",
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'letter',
       });
 
       // Add company logo to first page if available
@@ -57,16 +57,16 @@ export function PDFGenerator({}: PDFGeneratorProps) {
         try {
           pdf.addImage(
             companyLogo,
-            "PNG",
+            'PNG',
             10, // x position
             10, // y position
             30, // width
             15, // height
             undefined,
-            "FAST"
+            'FAST',
           );
         } catch (err) {
-          console.warn("Could not add company logo to PDF:", err);
+          console.warn('Could not add company logo to PDF:', err);
         }
       }
 
@@ -95,13 +95,13 @@ export function PDFGenerator({}: PDFGeneratorProps) {
           pdf.rect(x, y, TAG_WIDTH, TAG_HEIGHT);
 
           // Generate barcode
-          const barcodeCanvas = document.createElement("canvas");
+          const barcodeCanvas = document.createElement('canvas');
           barcodeCanvas.width = 240; // Higher resolution for better quality
           barcodeCanvas.height = 140;
 
           try {
             JsBarcode(barcodeCanvas, product.barcode, {
-              format: "CODE128",
+              format: 'CODE128',
               width: 2,
               height: 120,
               displayValue: false,
@@ -109,104 +109,250 @@ export function PDFGenerator({}: PDFGeneratorProps) {
             });
 
             // Convert canvas to image and add to PDF
-            const barcodeDataURL = barcodeCanvas.toDataURL("image/png");
+            const barcodeDataURL = barcodeCanvas.toDataURL('image/png');
             const barcodeX = x + (TAG_WIDTH - BARCODE_WIDTH) / 2;
             const barcodeY = y + 1;
 
             pdf.addImage(
               barcodeDataURL,
-              "PNG",
+              'PNG',
               barcodeX,
               barcodeY,
               BARCODE_WIDTH,
-              BARCODE_HEIGHT
+              BARCODE_HEIGHT,
             );
 
-            // Add barcode numbers
-            pdf.setFontSize(6);
-            pdf.setTextColor(0, 0, 0);
-            pdf.text(
-              product.barcode,
-              x + TAG_WIDTH / 2,
-              barcodeY + BARCODE_HEIGHT + 2,
-              { align: "center" }
-            );
+            // Helper functions (defined before first use)
+            function wrapTextPDF(
+              text: string,
+              maxWidth: number,
+              fontSize: number,
+              maxHeight: number,
+            ): string[] {
+              pdf.setFontSize(fontSize);
+              const words = text.split(' ');
+              const lines: string[] = [];
+              let currentLine = '';
+              const lineHeight = fontSize * 0.4; // PDF line height multiplier
+              let currentHeight = 0;
 
-            // Add product information (description)
-            let currentY = barcodeY + BARCODE_HEIGHT + 10;
-            pdf.setFontSize(8);
-
-            if (product.description) {
-              // Split description into multiple lines if too long
-              const words = product.description.split(" ");
-              let line = "";
-              const maxWidth = TAG_WIDTH - 2;
+              const pushLine = (line: string) => {
+                lines.push(line);
+                currentHeight += lineHeight;
+              };
 
               for (const word of words) {
-                const testLine = line + word + " ";
-                const textWidth = pdf.getTextWidth(testLine);
-                if (textWidth > maxWidth && line !== "") {
-                  pdf.text(line, x + 1, currentY);
-                  currentY += 3;
-                  line = word + " ";
+                const candidate = currentLine ? `${currentLine} ${word}` : word;
+                const candidateWidth = pdf.getTextWidth(candidate);
+
+                if (candidateWidth <= maxWidth) {
+                  currentLine = candidate;
+                  continue;
+                }
+
+                if (currentLine) {
+                  pushLine(currentLine);
+                  if (currentHeight + lineHeight > maxHeight) return lines;
+                  currentLine = '';
+                }
+
+                const wordWidth = pdf.getTextWidth(word);
+                if (wordWidth > maxWidth) {
+                  const pieces = splitLongWordPDF(word, maxWidth, fontSize);
+                  for (const piece of pieces) {
+                    if (currentHeight + lineHeight > maxHeight) return lines;
+                    pushLine(piece);
+                  }
+                  currentLine = '';
                 } else {
-                  line = testLine;
+                  currentLine = word;
                 }
               }
-              if (line) {
-                pdf.text(line, x + 1, currentY);
-                currentY += 3;
+
+              if (currentLine && currentHeight + lineHeight <= maxHeight) {
+                pushLine(currentLine);
               }
+
+              return lines;
             }
 
-            if (product.t2tCode) {
-              pdf.text(`T2T: ${product.t2tCode}`, x + 1, currentY);
-              currentY += 3;
+            function splitLongWordPDF(
+              word: string,
+              maxWidth: number,
+              fontSize: number,
+            ): string[] {
+              pdf.setFontSize(fontSize);
+              const lines: string[] = [];
+              let currentLine = '';
+
+              for (let i = 0; i < word.length; i++) {
+                const testLine = currentLine + word[i];
+                const textWidth = pdf.getTextWidth(testLine);
+
+                if (textWidth > maxWidth && currentLine) {
+                  lines.push(currentLine);
+                  currentLine = word[i];
+                } else {
+                  currentLine = testLine;
+                }
+              }
+
+              if (currentLine) {
+                lines.push(currentLine);
+              }
+
+              return lines;
             }
 
-            if (product.color) {
-              pdf.text(`Color: ${product.color}`, x + 1, currentY);
-              currentY += 3;
+            // Add barcode numbers with robust wrapping
+            pdf.setFontSize(6);
+            pdf.setTextColor(0, 0, 0);
+
+            const barcodeText = product.barcode;
+            const barcodeMaxWidth = TAG_WIDTH - 2; // Leave some margin
+            const barcodeTextWidth = pdf.getTextWidth(barcodeText);
+
+            if (barcodeTextWidth > barcodeMaxWidth) {
+              // Use the same robust wrapping function for barcode numbers
+              const barcodeLines = wrapTextPDF(
+                barcodeText,
+                barcodeMaxWidth,
+                6,
+                5,
+              ); // Max 5mm height for barcode
+              let lineY = barcodeY + BARCODE_HEIGHT + 2;
+
+              for (const line of barcodeLines) {
+                pdf.text(line, x + TAG_WIDTH / 2, lineY, {
+                  align: 'center',
+                });
+                lineY += 2.5; // Line height for PDF
+              }
+            } else {
+              pdf.text(
+                barcodeText,
+                x + TAG_WIDTH / 2,
+                barcodeY + BARCODE_HEIGHT + 2,
+                { align: 'center' },
+              );
             }
 
-            if (product.usSize) {
-              pdf.text(`US: ${product.usSize}`, x + 1, currentY);
-              currentY += 3;
-            }
+            // Add product information (description)
+            let currentY = barcodeY + BARCODE_HEIGHT + 5;
+            const maxWidth = TAG_WIDTH - 2;
+            const availableHeight = TAG_HEIGHT - (currentY - y) - 2; // Available space for text
 
-            if (product.ukSize) {
-              pdf.text(`UK: ${product.ukSize}`, x + 1, currentY);
+            // Function to calculate optimal font size for PDF
+            const getOptimalFontSizePDF = (
+              texts: string[],
+              maxWidth: number,
+              maxHeight: number,
+            ) => {
+              let fontSize = 8; // Start with max font size
+              let fits = false;
+
+              while (fontSize >= 4 && !fits) {
+                const lineHeight = fontSize * 0.4; // PDF line height multiplier
+                let totalHeight = 0;
+                let allTextFits = true;
+
+                for (const text of texts) {
+                  if (!text.trim()) continue;
+
+                  const lines = wrapTextPDF(
+                    text,
+                    maxWidth,
+                    fontSize,
+                    maxHeight - totalHeight,
+                  );
+                  const textHeight = lines.length * lineHeight;
+
+                  if (totalHeight + textHeight > maxHeight) {
+                    allTextFits = false;
+                    break;
+                  }
+
+                  totalHeight += textHeight;
+                }
+
+                if (allTextFits) {
+                  fits = true;
+                } else {
+                  fontSize -= 0.5;
+                }
+              }
+
+              return Math.max(fontSize, 4);
+            };
+
+            // Collect all text fields
+            const textFields = [
+              product.description,
+              product.t2tCode ? `T2T: ${product.t2tCode}` : '',
+              product.color ? `Color: ${product.color}` : '',
+              product.usSize ? `US: ${product.usSize}` : '',
+              product.ukSize ? `UK: ${product.ukSize}` : '',
+            ].filter(Boolean);
+
+            // Calculate optimal font size
+            const optimalFontSize = getOptimalFontSizePDF(
+              textFields,
+              maxWidth,
+              availableHeight,
+            );
+            const lineHeight = optimalFontSize * 0.4; // PDF line height multiplier
+
+            pdf.setFontSize(optimalFontSize);
+
+            // Draw all text with wrapping
+            for (const text of textFields) {
+              if (!text.trim()) continue;
+
+              const remainingHeight = y + TAG_HEIGHT - currentY - 2;
+              const lines = wrapTextPDF(
+                text,
+                maxWidth,
+                optimalFontSize,
+                remainingHeight,
+              );
+
+              for (const line of lines) {
+                // More aggressive overflow prevention
+                if (currentY + lineHeight > y + TAG_HEIGHT - 2) break;
+                pdf.text(line, x + 1, currentY);
+                currentY += lineHeight;
+              }
             }
           } catch (error) {
             console.error(
-              "Error generating barcode for product:",
+              'Error generating barcode for product:',
               product.barcode,
-              error
+              error,
             );
 
             // Add error text
             pdf.setFontSize(6);
             pdf.setTextColor(255, 0, 0);
-            pdf.text("Barcode Error", x + TAG_WIDTH / 2, y + TAG_HEIGHT / 2, {
-              align: "center",
+            pdf.text('Barcode Error', x + TAG_WIDTH / 2, y + TAG_HEIGHT / 2, {
+              align: 'center',
             });
           }
         }
       }
 
       // Save the PDF
-      pdf.save(`product-tags-${new Date().toISOString().split("T")[0]}.pdf`);
+      pdf.save(`product-tags-${new Date().toISOString().split('T')[0]}.pdf`);
 
       // Show success toast
       success(
-        "PDF Generated!",
-        `Successfully generated PDF with ${products.length} tags`
+        'PDF Generated!',
+        `Successfully generated PDF with ${products.length} tags`,
       );
     } catch (err) {
-      console.error("Error generating PDF:", err);
+      console.error('Error generating PDF:', err);
       error(
-        "PDF Generation Failed",
-        "An error occurred while generating the PDF. Please try again."
+        'PDF Generation Failed',
+        'An error occurred while generating the PDF. Please try again.',
       );
     } finally {
       setIsGenerating(false);
@@ -242,12 +388,12 @@ export function PDFGenerator({}: PDFGeneratorProps) {
           disabled={isGenerating}
           className={`w-full py-3 px-4 rounded-md font-medium transition-colors ${
             isGenerating
-              ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-              : "bg-green-600 text-white hover:bg-green-700"
+              ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+              : 'bg-green-600 text-white hover:bg-green-700'
           }`}
         >
           {isGenerating
-            ? "Generating PDF..."
+            ? 'Generating PDF...'
             : `Generate PDF (${products.length} tags)`}
         </button>
 
