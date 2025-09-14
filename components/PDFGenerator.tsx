@@ -4,6 +4,7 @@ import { useState } from "react";
 import jsPDF from "jspdf";
 import JsBarcode from "jsbarcode";
 import { useProducts } from "@/stores/productStore";
+import { useToast } from "@/contexts/ToastContext";
 
 interface PDFGeneratorProps {
   products?: never; // Remove products prop since we'll get it from store
@@ -12,6 +13,7 @@ interface PDFGeneratorProps {
 export function PDFGenerator({}: PDFGeneratorProps) {
   const products = useProducts();
   const [isGenerating, setIsGenerating] = useState(false);
+  const { success, error, warning } = useToast();
 
   // Letter paper dimensions in mm
   const LETTER_WIDTH = 216; // 8.5 inches
@@ -35,7 +37,10 @@ export function PDFGenerator({}: PDFGeneratorProps) {
   const tagsPerPage = tagsPerRow * tagsPerColumn;
 
   const generatePDF = async () => {
-    if (products.length === 0) return;
+    if (products.length === 0) {
+      warning("No Products", "Please add some products before generating PDF");
+      return;
+    }
 
     setIsGenerating(true);
 
@@ -171,9 +176,12 @@ export function PDFGenerator({}: PDFGeneratorProps) {
 
       // Save the PDF
       pdf.save(`product-tags-${new Date().toISOString().split('T')[0]}.pdf`);
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      alert("Error generating PDF. Please try again.");
+      
+      // Show success toast
+      success("PDF Generated!", `Successfully generated PDF with ${products.length} tags`);
+    } catch (err) {
+      console.error("Error generating PDF:", err);
+      error("PDF Generation Failed", "An error occurred while generating the PDF. Please try again.");
     } finally {
       setIsGenerating(false);
     }

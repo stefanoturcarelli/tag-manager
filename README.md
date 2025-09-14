@@ -1,8 +1,9 @@
-# Tag Manager - Product Barcode Generator 
+# Tag Manager - Product Barcode Generator
 
 A Next.js application for generating product tags with Code-128 barcodes. Create professional product labels with customizable information (product name, T2T code, color, sizes) and export them as optimized PDFs for printing. Features include live preview, efficient paper layout, and modern responsive UI.
 
 **Key Features:**
+
 - Generate Code-128 barcodes from product numbers
 - Customizable product information fields
 - PDF export with optimized Letter paper layout

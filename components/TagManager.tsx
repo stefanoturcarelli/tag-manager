@@ -5,11 +5,28 @@ import { ProductSearch } from "./ProductSearch";
 import { TagPreview } from "./TagPreview";
 import { PDFGenerator } from "./PDFGenerator";
 import { useProducts, useRemoveProduct, useClearAllProducts } from "@/stores/productStore";
+import { useToast } from "@/contexts/ToastContext";
 
 export function TagManager() {
   const products = useProducts();
   const removeProduct = useRemoveProduct();
   const clearAllProducts = useClearAllProducts();
+  const { success, warning } = useToast();
+
+  const handleRemoveProduct = (productId: string, productDescription: string) => {
+    removeProduct(productId);
+    success("Product Removed", `"${productDescription}" has been removed`);
+  };
+
+  const handleClearAll = () => {
+    if (products.length === 0) {
+      warning("No Products", "There are no products to clear");
+      return;
+    }
+    
+    clearAllProducts();
+    success("All Products Cleared", `${products.length} products have been removed`);
+  };
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -27,7 +44,7 @@ export function TagManager() {
                   Products ({products.length})
                 </h2>
                 <button
-                  onClick={clearAllProducts}
+                  onClick={handleClearAll}
                   className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
                 >
                   Clear All
@@ -52,7 +69,7 @@ export function TagManager() {
                     </div>
                   </div>
                     <button
-                      onClick={() => removeProduct(product.id)}
+                      onClick={() => handleRemoveProduct(product.id, product.description)}
                       className="ml-2 px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition-colors"
                     >
                       Remove
