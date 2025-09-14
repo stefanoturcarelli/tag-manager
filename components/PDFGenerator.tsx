@@ -52,23 +52,7 @@ export function PDFGenerator({}: PDFGeneratorProps) {
         format: 'letter',
       });
 
-      // Add company logo to first page if available
-      if (companyLogo) {
-        try {
-          pdf.addImage(
-            companyLogo,
-            'PNG',
-            10, // x position
-            10, // y position
-            30, // width
-            15, // height
-            undefined,
-            'FAST',
-          );
-        } catch (err) {
-          console.warn('Could not add company logo to PDF:', err);
-        }
-      }
+      // Do not add company logo to PDF pages
 
       const totalPages = Math.ceil(products.length / tagsPerPage);
 
@@ -208,13 +192,16 @@ export function PDFGenerator({}: PDFGeneratorProps) {
             pdf.setFontSize(6);
             pdf.setTextColor(0, 0, 0);
             const MM_PER_PT = 0.352778; // mm per point
+            const LINE_HEIGHT_FACTOR = 1.25; // approximate canvas 8px -> 10px
             const BARCODE_TEXT_FONT = 6;
             const BARCODE_TEXT_LINE_HEIGHT =
-              BARCODE_TEXT_FONT * MM_PER_PT + 0.2;
+              BARCODE_TEXT_FONT * MM_PER_PT * LINE_HEIGHT_FACTOR;
 
             const barcodeText = product.barcode;
             const barcodeMaxWidth = TAG_WIDTH - 2; // Leave some margin
             const barcodeTextWidth = pdf.getTextWidth(barcodeText);
+
+            let afterBarcodeTextY = barcodeY + BARCODE_HEIGHT + 1.2; // default fallback
 
             if (barcodeTextWidth > barcodeMaxWidth) {
               // Use the same robust wrapping function for barcode numbers
@@ -224,7 +211,7 @@ export function PDFGenerator({}: PDFGeneratorProps) {
                 6,
                 5,
               ); // Max 5mm height for barcode
-              let lineY = barcodeY + BARCODE_HEIGHT + 1.5;
+              let lineY = barcodeY + BARCODE_HEIGHT + 1.2;
 
               for (const line of barcodeLines) {
                 pdf.text(line, x + TAG_WIDTH / 2, lineY, {
@@ -232,19 +219,20 @@ export function PDFGenerator({}: PDFGeneratorProps) {
                 });
                 lineY += BARCODE_TEXT_LINE_HEIGHT; // Line height for PDF
               }
+
+              afterBarcodeTextY = lineY + 0.1; // small extra gap
             } else {
-              pdf.text(
-                barcodeText,
-                x + TAG_WIDTH / 2,
-                barcodeY + BARCODE_HEIGHT + 1.5,
-                { align: 'center' },
-              );
+              const singleLineY = barcodeY + BARCODE_HEIGHT + 1.2;
+              pdf.text(barcodeText, x + TAG_WIDTH / 2, singleLineY, {
+                align: 'center',
+              });
+              afterBarcodeTextY = singleLineY + BARCODE_TEXT_LINE_HEIGHT + 0.1;
             }
 
             // Add product information (description)
-            let currentY = barcodeY + BARCODE_HEIGHT + 1.3;
+            let currentY = afterBarcodeTextY;
             const maxWidth = TAG_WIDTH - 2;
-            const availableHeight = TAG_HEIGHT - (currentY - y) - 1; // Available space for text
+            const availableHeight = TAG_HEIGHT - (currentY - y) - 0.5; // Available space for text
 
             // Function to calculate optimal font size for PDF
             const getOptimalFontSizePDF = (
@@ -252,11 +240,11 @@ export function PDFGenerator({}: PDFGeneratorProps) {
               maxWidth: number,
               maxHeight: number,
             ) => {
-              let fontSize = 8; // Start with max font size
+              let fontSize = 6; // Start at ~8px canvas equivalent
               let fits = false;
 
-              while (fontSize >= 4 && !fits) {
-                const lineHeight = fontSize * MM_PER_PT + 0.2; // mm per pt + leading
+              while (fontSize >= 3 && !fits) {
+                const lineHeight = fontSize * MM_PER_PT * LINE_HEIGHT_FACTOR; // mm per pt * leading
                 let totalHeight = 0;
                 let allTextFits = true;
 
@@ -286,7 +274,7 @@ export function PDFGenerator({}: PDFGeneratorProps) {
                 }
               }
 
-              return Math.max(fontSize, 4);
+              return Math.max(fontSize, 3);
             };
 
             // Collect all text fields
@@ -304,7 +292,7 @@ export function PDFGenerator({}: PDFGeneratorProps) {
               maxWidth,
               availableHeight,
             );
-            const lineHeight = optimalFontSize * MM_PER_PT + 0.2; // PDF line height in mm
+            const lineHeight = optimalFontSize * MM_PER_PT * LINE_HEIGHT_FACTOR; // PDF line height in mm
 
             pdf.setFontSize(optimalFontSize);
 
@@ -312,7 +300,7 @@ export function PDFGenerator({}: PDFGeneratorProps) {
             for (const text of textFields) {
               if (!text.trim()) continue;
 
-              const remainingHeight = y + TAG_HEIGHT - currentY - 1;
+              const remainingHeight = y + TAG_HEIGHT - currentY - 0.5;
               const lines = wrapTextPDF(
                 text,
                 maxWidth,
@@ -322,7 +310,7 @@ export function PDFGenerator({}: PDFGeneratorProps) {
 
               for (const line of lines) {
                 // More aggressive overflow prevention
-                if (currentY + lineHeight > y + TAG_HEIGHT - 1) break;
+                if (currentY + lineHeight > y + TAG_HEIGHT - 0.5) break;
                 pdf.text(line, x + 1, currentY);
                 currentY += lineHeight;
               }
